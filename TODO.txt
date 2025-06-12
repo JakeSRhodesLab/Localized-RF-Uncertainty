@@ -1,2 +1,8 @@
 Make ICE scores work with other proximity methods.
 Test ICE with other proximity methods.
+Build classification runner.
+
+Build out regression methods and runner.
+Have Zhang method in separate regression method file for ease.
+
+Add any other methods?
