@@ -645,10 +645,6 @@ def RFGAP(prediction_type = None, y = None, prox_method = 'rfgap',
             if self.oob_score is False:
                 raise ValueError("Trust scores are only available for models fitted with oob_score=True")            
 
-            # TODO: Update this to just row-normalize the proximities to work with other proximity methods.
-            if self.prox_method != 'rfgap':
-                raise ValueError("Trust scores are only available for RF-GAP proximities")
-
             # Compute out-of-bag probabilities and correctness
             self.oob_proba = self.oob_decision_function_
             self.oob_predictions = np.argmax(self.oob_proba, axis=1)
@@ -660,6 +656,11 @@ def RFGAP(prediction_type = None, y = None, prox_method = 'rfgap',
                 self.proximities = proximities_result.toarray() if isinstance(proximities_result, sparse.csr_matrix) else proximities_result
             elif isinstance(self.proximities, sparse.csr_matrix):
                 self.proximities = self.proximities.toarray()
+
+
+            if self.prox_method != 'rfgap':
+                row_sums = self.proximities.sum(axis=1, keepdims=True)
+                self.proximities = self.proximities / row_sums
 
             # Compute trust scores for training data
             self.ice = self.proximities @ self.is_correct_oob
