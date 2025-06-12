@@ -1,0 +1,2 @@
+Make ICE scores work with other proximity methods.
+Test ICE with other proximity methods.
