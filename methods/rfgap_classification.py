@@ -11,12 +11,18 @@ def rfgap_methods(X, y, X_test=None, y_test=None, prox_method = 'rfgap',
     rf.get_nonconformity(k=k, x_test=X_test, y_test=y_test, k = k)
     rf.get_instance_classification_expectation(x_test = X_test, y_test = y_test)
 
-    # TODO: Add more as needed
+    # Has all results in case needed for plots
     plot_results = {
         'prox_method': prox_method,
         'conformity_k': k,
         'random_state': random_state,
         'oob_score_': rf.oob_score_,
+        'diff_proba_auc': rf.diff_proba_auc,
+        'diff_proba_auc_test': rf.diff_proba_auc_test,
+        'conformity_auc': rf.conformity_auc,
+        'conformity_auc_test': rf.conformity_auc_test,
+        'ice_auc': rf.ice_auc,
+        'ice_auc_test': rf.ice_auc_test
         'diff_proba_accuarcy_drop': rf.diff_proba_accuarcy_drop,
         'diff_proba_n_drop': rf.diff_proba_n_drop,
         'diff_proba_accuracy_drop_test': rf.diff_proba_accuarcy_drop_test,
@@ -31,10 +37,12 @@ def rfgap_methods(X, y, X_test=None, y_test=None, prox_method = 'rfgap',
         'ice_n_drop_test': rf.ice_n_drop_test
     }
     
+    # Just results for tables
     quant_results = {
         'prox_method': prox_method,
         'conformity_k': k,
         'random_state': random_state,
+        'oob_score_': rf.oob_score_,
         'diff_proba_auc': rf.diff_proba_auc,
         'diff_proba_auc_test': rf.diff_proba_auc_test,
         'conformity_auc': rf.conformity_auc,
@@ -43,4 +51,5 @@ def rfgap_methods(X, y, X_test=None, y_test=None, prox_method = 'rfgap',
         'ice_auc_test': rf.ice_auc_test
     }
     
+    # Maybe different return values?
     return rf, plot_results, quant_results
