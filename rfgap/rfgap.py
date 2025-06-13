@@ -694,126 +694,126 @@ def RFGAP(prediction_type = None, y = None, prox_method = 'rfgap',
 
             return results
 
-
-        def predict_with_intervals(self, X_test: np.ndarray = None, n_neighbors: int | str = 'auto', 
-                            level: float = 0.95, verbose: bool = True) -> tuple:
+        def predict_with_intervals(
+            self,
+            X_test: np.ndarray = None,
+            n_neighbors: int | str = 'auto',
+            level: float = 0.95,
+            verbose: bool = True
+        ) -> tuple:
             """
             Generate point predictions with prediction intervals for the test set using RF-GAP proximities.
-
-            Prediction intervals are based on the distribution of OOB residuals conditioned on RF-GAP proximities.
-            The model must be fit with `x_test` and `oob_score=True` for this method to work. Since the test data
-            is stored in the model object during fitting, `X_test` is optional.
 
             Parameters
             ----------
             X_test : np.ndarray, optional
                 Test set for generating predictions and prediction intervals.
-                If omitted, the stored test data from model fitting is used.
+                If omitted, stored test data from model fitting is used.
 
             n_neighbors : int or {'auto', 'all'}, default='auto'
-                Number of nearest neighbors to use for estimating residual distribution.
-                - If an integer, all test observations use the same number of neighbors.
-                - If 'auto', dynamically determines the number of neighbors per test point.
-                - If 'all', uses all available training observations.
+                Number of nearest neighbors to use for residual quantile estimation.
 
             level : float, default=0.95
-                Confidence level for the prediction interval. Must be between 0 and 1.
+                Confidence level for the prediction interval (between 0 and 1).
 
             verbose : bool, default=True
-                If True, prints warnings and other messages.
+                If True, prints warnings and info messages.
 
             Returns
             -------
-            y_pred : np.ndarray of shape (n_test,)
+            y_pred : np.ndarray
                 Point predictions for the test set.
 
-            y_pred_lwr : np.ndarray of shape (n_test,)
+            y_pred_lwr : np.ndarray
                 Lower bound of the prediction interval.
 
-            y_pred_upr : np.ndarray of shape (n_test,)
+            y_pred_upr : np.ndarray
                 Upper bound of the prediction interval.
 
             Raises
             ------
             ValueError
-                If RF-GAP proximities are not used, the model is a classification model,
-                or `oob_score` was not enabled during training.
+                If model is classification, or `oob_score=True` was not used.
             """
-            
-            # Validate method applicability
-            if self.prox_method != 'rfgap':
-                raise ValueError("Prediction intervals are only available for RF-GAP proximities.")
-            
+
+            # --- Validations ---
             if self.prediction_type == 'classification':
                 raise ValueError("Prediction intervals are only available for regression models.")
-            
+
             if not hasattr(self, 'oob_score_'):
-                raise ValueError("Model must be fit with `oob_score=True`. Returning point predictions only.")
+                raise ValueError("Model must be fit with `oob_score=True`.")
 
             self.interval_level = level
 
-            # Retrieve proximities
-            self.proximities: np.ndarray = self.get_proximities().toarray()
+            # --- Retrieve and normalize proximities if needed ---
+            self.proximities = self.get_proximities().toarray()
+            if self.prox_method != 'rfgap':
+                self.proximities /= self.proximities.sum(axis=1, keepdims=True)
 
-            # Compute test proximities
-            test_proximities = self.prox_extend(X_test)
-            if isinstance(test_proximities, sparse.csr_matrix):
-                test_proximities = test_proximities.toarray()
-
-            self.test_proximities_ = test_proximities
-            self.x_test = X_test
-
-            # Compute OOB residuals
+            # --- Compute OOB prediction intervals ---
+            np.fill_diagonal(self.proximities, 0.0)
+            train_neighbor_indices = np.flip(self.proximities.argsort(axis=1), axis=1)
             oob_residuals = self.y - self.oob_prediction_
 
-            # Tile residuals to match test proximity shape
-            oob_residuals_tiled = np.tile(oob_residuals, (self.test_proximities_.shape[0], 1))
+            tiled_residuals = np.tile(oob_residuals, (len(oob_residuals), 1))
+            sorted_residuals = np.take_along_axis(tiled_residuals, train_neighbor_indices, axis=1)
+            sorted_proximities = np.take_along_axis(self.proximities, train_neighbor_indices, axis=1)
 
-            # Sort OOB residuals by proximity (nearest to farthest)
-            nearest_neighbor_indices = np.flip(self.test_proximities_.argsort(axis=1), axis=1)
-            nearest_neighbor_residuals = np.take_along_axis(oob_residuals_tiled, nearest_neighbor_indices, axis=1)
-            self.nearest_neighbor_residuals_ = nearest_neighbor_residuals
+            if n_neighbors == 'auto':
+                sorted_residuals[sorted_proximities < 1e-10] = np.nan
+                oob_resid_lwr = np.nanquantile(sorted_residuals, (1 - level) / 2, axis=1)
+                oob_resid_upr = np.nanquantile(sorted_residuals, 1 - (1 - level) / 2, axis=1)
+            else:
+                k = sorted_residuals.shape[1] if n_neighbors == 'all' else int(n_neighbors)
+                oob_resid_lwr = np.quantile(sorted_residuals[:, :k], (1 - level) / 2, axis=1)
+                oob_resid_upr = np.quantile(sorted_residuals[:, :k], 1 - (1 - level) / 2, axis=1)
 
-            # Validate `n_neighbors`
-            match n_neighbors:
-                case int() if n_neighbors > 0:
-                    pass
-                case float() if n_neighbors > 0:
+            self.oob_pred_lwr_ = self.oob_prediction_ + oob_resid_lwr
+            self.oob_pred_upr_ = self.oob_prediction_ + oob_resid_upr
+
+            # --- Return early if no test data ---
+            if X_test is None:
+                return self.oob_prediction_, self.oob_pred_lwr_, self.oob_pred_upr_
+
+            # --- Compute test proximities and residuals ---
+            test_proximities = self.prox_extend(X_test)
+            if hasattr(test_proximities, 'toarray'):
+                test_proximities = test_proximities.toarray()
+
+            if self.prox_method != 'rfgap':
+                test_proximities /= test_proximities.sum(axis=1, keepdims=True)
+
+            self.test_proximities_ = test_proximities
+
+            tiled_test_residuals = np.tile(oob_residuals, (test_proximities.shape[0], 1))
+            neighbor_indices = np.flip(test_proximities.argsort(axis=1), axis=1)
+            residuals_sorted = np.take_along_axis(tiled_test_residuals, neighbor_indices, axis=1)
+
+            if n_neighbors == 'auto':
+                sorted_proximities = np.take_along_axis(test_proximities, neighbor_indices, axis=1)
+                residuals_sorted[sorted_proximities < 1e-10] = np.nan
+                resid_lwr = np.nanquantile(residuals_sorted, (1 - level) / 2, axis=1)
+                resid_upr = np.nanquantile(residuals_sorted, 1 - (1 - level) / 2, axis=1)
+            else:
+                if isinstance(n_neighbors, float):
                     n_neighbors = round(n_neighbors)
                     if verbose:
-                        warnings.warn(f"n_neighbors must be an integer or 'auto'. Using {n_neighbors} nearest neighbors.", 
-                                    category=UserWarning)
-                case 'auto':
-                    test_proximities_sorted = np.take_along_axis(self.test_proximities_, nearest_neighbor_indices, axis=1)
-                    self.test_proximities_sorted_ = test_proximities_sorted
+                        warnings.warn(f"n_neighbors as float rounded to {n_neighbors}.", UserWarning)
+                elif n_neighbors == 'all':
+                    n_neighbors = residuals_sorted.shape[1]
+                elif not isinstance(n_neighbors, int) or n_neighbors <= 0:
+                    raise ValueError("n_neighbors must be a positive integer, 'auto', or 'all'.")
 
-                    # Remove zero proximities to exclude them from quantile calculation
-                    nearest_neighbor_residuals[test_proximities_sorted < 1e-10] = np.nan
-                case 'all':
-                    n_neighbors = nearest_neighbor_residuals.shape[1]
-                case _:
-                    raise ValueError("n_neighbors must be a positive integer or 'auto'.")
+                resid_lwr = np.quantile(residuals_sorted[:, :n_neighbors], (1 - level) / 2, axis=1)
+                resid_upr = np.quantile(residuals_sorted[:, :n_neighbors], 1 - (1 - level) / 2, axis=1)
 
-            # Save argument for reference
-            self.interval_n_neighbors_: int | str = n_neighbors
-
-            # Compute residual quantiles for interval estimation
-            if n_neighbors == 'auto':
-                resid_lwr = np.nanquantile(nearest_neighbor_residuals, (1 - level) / 2, axis=1)
-                resid_upr = np.nanquantile(nearest_neighbor_residuals, 1 - (1 - level) / 2, axis=1)
-            else:
-                resid_lwr = np.quantile(nearest_neighbor_residuals[:, :n_neighbors], (1 - level) / 2, axis=1)
-                resid_upr = np.quantile(nearest_neighbor_residuals[:, :n_neighbors], 1 - (1 - level) / 2, axis=1)
-
-            # Compute point predictions and final prediction interval
-            y_pred: np.ndarray = self.predict(self.x_test)
-
+            self.interval_n_neighbors_ = n_neighbors
+            y_pred = self.predict(X_test)
             y_pred_lwr = y_pred + resid_lwr
             y_pred_upr = y_pred + resid_upr
 
             return y_pred, y_pred_lwr, y_pred_upr
-
-            
+   
         def get_nonconformity(self, k: int = 5, x_test: np.ndarray = None, y_test: np.ndarray = None, proximity_type = None):
             """
             Calculates nonconformity scores for the training set using RF-GAP proximities.
