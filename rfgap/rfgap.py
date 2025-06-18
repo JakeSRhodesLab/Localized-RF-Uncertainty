@@ -428,6 +428,7 @@ def RFGAP(prediction_type = None, y = None, prox_method = 'rfgap',
                 return prox_sparse
 
 
+        # TODO: Discard function if not used; not currently working
         def get_test_proximities(self, x_test: np.ndarray) -> np.ndarray:
             """
             Computes proximity values between test samples and the trained model using RF-GAP or OOB proximities.
@@ -460,32 +461,32 @@ def RFGAP(prediction_type = None, y = None, prox_method = 'rfgap',
             # Store current attributes to restore later
             leaf_matrix_temp = self.leaf_matrix
 
-            try:
-                # Apply test data to obtain leaf assignments
-                self.leaf_matrix = self.apply(x_test)
+            # try:
+            # Apply test data to obtain leaf assignments
+            self.leaf_matrix = self.apply(x_test)
 
-                # Temporarily adjust attributes for different proximity methods
-                if self.prox_method in ['oob', 'rfgap']:
-                    oob_indices_temp, self.oob_indices = self.oob_indices, np.ones((n_test, self.n_estimators))
-                    oob_leaves_temp, self.oob_leaves = self.oob_leaves, self.oob_indices * self.leaf_matrix
+            # Temporarily adjust attributes for different proximity methods
+            if self.prox_method in ['oob', 'rfgap']:
+                oob_indices_temp, self.oob_indices = self.oob_indices, np.ones((n_test, self.n_estimators))
+                oob_leaves_temp, self.oob_leaves = self.oob_leaves, self.oob_indices * self.leaf_matrix
 
-                if self.prox_method == 'rfgap':
-                    in_bag_indices_temp, self.in_bag_indices = self.in_bag_indices, np.zeros((n_test, self.n_estimators))
-                    in_bag_leaves_temp, self.in_bag_leaves = self.in_bag_leaves, self.in_bag_indices * self.leaf_matrix
-                    in_bag_counts_temp, self.in_bag_counts = self.in_bag_counts, np.zeros((n_test, self.n_estimators))
+            if self.prox_method == 'rfgap':
+                in_bag_indices_temp, self.in_bag_indices = self.in_bag_indices, np.zeros((n_test, self.n_estimators))
+                in_bag_leaves_temp, self.in_bag_leaves = self.in_bag_leaves, self.in_bag_indices * self.leaf_matrix
+                in_bag_counts_temp, self.in_bag_counts = self.in_bag_counts, np.zeros((n_test, self.n_estimators))
 
-                # Calculate proximities using updated test attributes
-                prox_test = self.get_proximities()
+            # Calculate proximities using updated test attributes
+            prox_test = self.get_proximities()
 
-            finally:
-                # Restore original attributes
-                self.leaf_matrix = leaf_matrix_temp
-                if self.prox_method in ['oob', 'rfgap']:
-                    self.oob_indices, self.oob_leaves = oob_indices_temp, oob_leaves_temp
-                if self.prox_method == 'rfgap':
-                    self.in_bag_indices, self.in_bag_leaves, self.in_bag_counts = (
-                        in_bag_indices_temp, in_bag_leaves_temp, in_bag_counts_temp
-                    )
+            # finally:
+            # Restore original attributes
+            self.leaf_matrix = leaf_matrix_temp
+            if self.prox_method in ['oob', 'rfgap']:
+                self.oob_indices, self.oob_leaves = oob_indices_temp, oob_leaves_temp
+            if self.prox_method == 'rfgap':
+                self.in_bag_indices, self.in_bag_leaves, self.in_bag_counts = (
+                    in_bag_indices_temp, in_bag_leaves_temp, in_bag_counts_temp
+                )
 
             return prox_test
 
@@ -812,7 +813,7 @@ def RFGAP(prediction_type = None, y = None, prox_method = 'rfgap',
             y_pred_lwr = y_pred + resid_lwr
             y_pred_upr = y_pred + resid_upr
 
-            return y_pred, y_pred_lwr, y_pred_upr
+            return y_pred_lwr, y_pred, y_pred_upr
    
         def get_nonconformity(self, k: int = 5, x_test: np.ndarray = None, y_test: np.ndarray = None, proximity_type = None):
             """
@@ -906,7 +907,8 @@ def RFGAP(prediction_type = None, y = None, prox_method = 'rfgap',
                 # If test set is provided, calculate nonconformity scores for test predictions
                 if x_test is not None:
                     self.test_preds = self.predict(x_test)
-                    proximities_test = self.get_test_proximities(x_test)
+                    # proximities_test = self.get_test_proximities(x_test)
+                    proximities_test = self.prox_extend(x_test) # NOT SURE IF THIS WILL WORK
 
                     # Convert sparse matrix to dense if necessary
                     if isinstance(proximities_test, sparse.csr_matrix):
@@ -915,13 +917,24 @@ def RFGAP(prediction_type = None, y = None, prox_method = 'rfgap',
                     self.nonconformity_scores_test = np.zeros_like(self.test_preds, dtype=float)
 
                     for label in np.unique(self.test_preds):
-                        mask_test = self.test_preds == label
-                        same_proximities = proximities_test[:, mask_test]
-                        diff_proximities = proximities_test[:, ~mask_test]
+                        # mask_test = self.test_preds == label # MATCH UP WITH TRANING LABELS
+
+                        mask_test = y_test == label
+                        mask = self.y == label
+
+                        print('mask_test: ', mask_test.shape)
+                        print('proximities_test: ', proximities_test.shape)
+
+                        # If using prox_extend, dimensions do not match up
+                        same_proximities = proximities_test[:, mask]
+                        diff_proximities = proximities_test[:, ~mask]
 
                         same_k = np.partition(same_proximities, -k, axis=1)[:, -k:]
                         diff_k = np.partition(diff_proximities, -k, axis=1)[:, -k:]
 
+                        # TODO: Review this: conformity is first calculated according to the tranining labels, but then
+                        # aggregated according to the test labels. Better way of doing this?
+                        
                         # Assign test nonconformity scores
                         diff_mean_test = np.mean(diff_k, axis=1)[mask_test]
                         same_mean_test = np.mean(same_k, axis=1)[mask_test]
@@ -936,7 +949,7 @@ def RFGAP(prediction_type = None, y = None, prox_method = 'rfgap',
                     self.conformity_quantiles_test = np.quantile(self.conformity_scores_test, np.linspace(0, 0.99, 100))
 
                     # Compute accuracy rejection curve metrics for test set
-                    # TODO: Test this out
+                    # TODO: NOT CURRENTLY WORKING
                     if y_test is not None:
                         self.conformity_auc_test, self.conformity_accuracy_drop_test, self.conformity_n_drop_test = self.accuracy_rejection_auc(
                         self.conformity_quantiles_test, self.conformity_scores_test, x_test = x_test, y_test = y_test)
