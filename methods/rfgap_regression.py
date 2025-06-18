@@ -1,1 +1,0 @@
-# File for all regression interval methods using the RFGAP class.
