@@ -101,6 +101,15 @@ def process_dataset(idx, random_state):
                     prox_method=prox_method, random_state=random_state, k=k
                 )
 
+                plot_results['name'] = name
+                plot_results['n_features'] = d
+                plot_results['n_samples'] = n
+
+                base_results['name'] = name
+                base_results['n_features'] = d
+                base_results['n_samples'] = n
+
+
                 save_to_pkl(plot_results, qual_fname)
                 save_to_pkl(base_results, quant_fname)
 
