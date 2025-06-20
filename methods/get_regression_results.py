@@ -2,7 +2,6 @@
 import numpy as np
 from quantile_forest import RandomForestQuantileRegressor
 from rfgap import RFGAP
-from .rfintervals import rfintervals
 from rfgap.helpers import is_in_interval, get_coverage, get_width_stats
 
 
