@@ -1,7 +1,7 @@
 joblib==1.4.2
-numpy==2.3.0
+numpy==1.26.4
 openml==0.15.1
-pandas==2.3.0
+pandas==2.2.3
 quantile_forest==1.4.0
 scikit_learn==1.7.0
 scipy==1.15.3
