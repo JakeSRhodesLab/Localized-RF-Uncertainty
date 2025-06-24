@@ -69,7 +69,7 @@ def process_dataset(idx, random_state):
     d = classification_datasets[idx]['n_features']
 
     # TODO: Dynamically determine the methods to use based on the dataset
-    ks = [1, 5, 10, 20, 50, 100, 200, 500, 'all', 'auto']
+    ks = [1, 5, 10, 20, 50, 100, 200, 500]
 
 
     for prox_method in prox_methods:
