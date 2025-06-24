@@ -1212,38 +1212,24 @@ def RFGAP(prediction_type = None, y = None, prox_method = 'rfgap',
                                                                                                                                                self.diff_proba_test,
                                                                                                                                                x_test = x_test,
                                                                                                                                                y_test = y_test)
+        def get_oob_conformity(self, X, y, x_test = None, y_test = None):
+            """
+            "For each (x,y) we aggregate the votes for this example only of those
+            decision trees where this example is out-of-bag (not in the training
+            set for the tree). The conformity score is then equal to the proportion
+            of correct votes for (x,y) among these trees."
+            """
 
 
-        # TODO: Replace with the auc function
-        # def accuracy_rejection_curve_area(self, quantiles, scores, x_test = None, y_test = None):
-        #     # Get out-of-bag predictions from the RandomForest model
-        #     oob_preds = np.argmax(self.oob_decision_function_, axis=1)
-            
-        #     # Calculate dropped proportion and accuracy for each quantile
-        #     # TODO: Test out the test sets
+            tree_preds = np.array([estimator.predict(X) for estimator in self.estimators_]).T
+            oob_inds = self.get_oob_indices(X)
+            oob_tree_preds = tree_preds * oob_inds
 
-        #     if x_test is not None and y_test is None:
-        #         raise ValueError("If x_test is provided, y_test must also be provided for accuracy calculations.")
+            self.oob_conformity = oob_tree_preds.sum(axis = 1) / oob_inds.sum(axis=1)
 
-        #     if y_test is not None:
-        #         if len(y_test) != len(scores):
-        #             raise ValueError("Length of y_test must match the length of scores.")
-                
-        #         preds = self.predict(x_test)
-
-        #         n_dropped = np.array([np.sum(scores <= q) / len(scores) for q in quantiles])
-        #         accuracy_drop = np.array([np.mean(y_test[scores >= q] == preds[scores >= q]) for q in quantiles])
-                
-        #         # Calculate area under the accuracy-rejection curve
-        #         return np.trapz(accuracy_drop, n_dropped), accuracy_drop, n_dropped
-
-        #     else:
-        #         n_dropped = np.array([np.sum(scores <= q) / len(scores) for q in quantiles])
-        #         accuracy_drop = np.array([np.mean(self.y[scores >= q] == oob_preds[scores >= q]) for q in quantiles])
-                
-        #         # Calculate area under the accuracy-rejection curve
-        #         return np.trapz(accuracy_drop, n_dropped), accuracy_drop, n_dropped
-
+            if x_test is not None:
+                tree_preds_test = np.array([estimator.predict(x_test) for estimator in self.estimators_]).T
+                self.oob_conformity_test = tree_preds_test.sum(axis=1) / len(self.estimators_)
 
 
     return RFGAP(prox_method = prox_method, matrix_type = matrix_type, triangular = triangular, **kwargs)
