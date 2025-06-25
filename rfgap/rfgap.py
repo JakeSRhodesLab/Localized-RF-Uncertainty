@@ -1212,7 +1212,7 @@ def RFGAP(prediction_type = None, y = None, prox_method = 'rfgap',
                                                                                                                                                self.diff_proba_test,
                                                                                                                                                x_test = x_test,
                                                                                                                                                y_test = y_test)
-        def get_oob_conformity(self, X, y, x_test = None, y_test = None):
+        def get_tree_conformity(self, X, y, x_test = None, y_test = None):
             """
             "For each (x,y) we aggregate the votes for this example only of those
             decision trees where this example is out-of-bag (not in the training
@@ -1225,11 +1225,25 @@ def RFGAP(prediction_type = None, y = None, prox_method = 'rfgap',
             oob_inds = self.get_oob_indices(X)
             oob_tree_preds = tree_preds * oob_inds
 
-            self.oob_conformity = oob_tree_preds.sum(axis = 1) / oob_inds.sum(axis=1)
+
+            self.tree_conformity = oob_tree_preds.sum(axis = 1) / oob_inds.sum(axis=1)
+            self.tree_conformity_quantiles = np.quantile(self.tree_conformity, np.linspace(0, 0.99, 100))
+
+
+            self.tree_conformity_auc, self.tree_conformity_accuracy_drop, self.tree_conformity_n_drop = self.accuracy_rejection_auc(
+                self.tree_conformity_quantiles, self.tree_conformity
+            )
 
             if x_test is not None:
                 tree_preds_test = np.array([estimator.predict(x_test) for estimator in self.estimators_]).T
-                self.oob_conformity_test = tree_preds_test.sum(axis=1) / len(self.estimators_)
+                self.tree_conformity_test = tree_preds_test.sum(axis=1) / len(self.estimators_)
+                self.tree_conformity_quantiles_test = np.quantile(self.tree_conformity_test, np.linspace(0, 0.99, 100))
+
+
+                if y_test is not None:
+                    self.tree_conformity_auc_test, self.tree_conformity_accuracy_drop_test, self.tree_conformity_n_drop_test = self.accuracy_rejection_auc(
+                        self.tree_conformity_quantiles_test, self.tree_conformity_test, x_test, y_test
+                    )
 
 
     return RFGAP(prox_method = prox_method, matrix_type = matrix_type, triangular = triangular, **kwargs)
