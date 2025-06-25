@@ -12,6 +12,7 @@ def get_classification_results(X, y, X_test=None, y_test=None, prox_method = 'rf
     rf.get_diff_proba(x_test=X_test, y_test=y_test) # Not dependent on prox_method
     rf.get_nonconformity(k=k, x_test=X_test, y_test=y_test)
     rf.get_instance_classification_expectation(x_test = X_test, y_test = y_test)
+    rf.get_tree_conformity(X, y, x_test = X_test, y_test = y_test)
 
     # Has all results in case needed for plots
     plot_results = {
@@ -23,8 +24,6 @@ def get_classification_results(X, y, X_test=None, y_test=None, prox_method = 'rf
         'diff_proba_auc_test': rf.diff_proba_auc_test,
         'conformity_auc': rf.conformity_auc,
         'conformity_auc_test': rf.conformity_auc_test,
-        'ice_auc': rf.ice_auc,
-        'ice_auc_test': rf.ice_auc_test,
         'diff_proba_accuarcy_drop': rf.diff_proba_accuarcy_drop,
         'diff_proba_n_drop': rf.diff_proba_n_drop,
         'diff_proba_accuracy_drop_test': rf.diff_proba_accuarcy_drop_test,
@@ -33,10 +32,20 @@ def get_classification_results(X, y, X_test=None, y_test=None, prox_method = 'rf
         'conformity_n_drop': rf.conformity_n_drop,
         'conformity_accuracy_drop_test': rf.conformity_accuracy_drop_test,
         'conformity_n_drop_test': rf.conformity_n_drop_test,
+        'ice_auc': rf.ice_auc,
+        'ice_auc_test': rf.ice_auc_test,
         'ice_accuracy_drop': rf.ice_accuracy_drop,
         'ice_n_drop': rf.ice_n_drop,
         'ice_accuracy_drop_test': rf.ice_accuracy_drop_test,
-        'ice_n_drop_test': rf.ice_n_drop_test
+        'ice_n_drop_test': rf.ice_n_drop_test,
+        'tree_conformity': rf.tree_conformity,
+        'tree_conformity_test': rf.tree_conformity_test,
+        'tree_conformity_accuracy_drop': rf.tree_conformity_accuracy_drop,
+        'tree_conformity_accuracy_drop_test': rf.tree_conformity_accuracy_drop_test,
+        'tree_conformity_n_drop': rf.tree_conformity_n_drop,
+        'tree_conformity_n_drop_test': rf.tree_conformity_n_drop_test,
+        'tree_conformity_auc': rf.tree_conformity_auc,
+        'tree_conformity_auc_test': rf.tree_conformity_auc_test
     }
     
     # Just results for tables
@@ -50,7 +59,9 @@ def get_classification_results(X, y, X_test=None, y_test=None, prox_method = 'rf
         'conformity_auc': rf.conformity_auc,
         'conformity_auc_test': rf.conformity_auc_test,
         'ice_auc': rf.ice_auc,
-        'ice_auc_test': rf.ice_auc_test
+        'ice_auc_test': rf.ice_auc_test,
+        'tree_conformity_auc': rf.tree_conformity_auc,
+        'tree_conformity_auc_test': rf.tree_conformity_auc_test
     }
     
     # Maybe different return values?

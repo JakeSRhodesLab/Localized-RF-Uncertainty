@@ -93,8 +93,6 @@ def process_dataset(idx, random_state):
 
             try:
 
-
-
                 # NOT READY, DOUBLE CHECK FUNCTIONS AND INPUTS
                 rf, plot_results, base_results = get_classification_results(
                     X_train, y_train, X_test=X_test, y_test=y_test,
