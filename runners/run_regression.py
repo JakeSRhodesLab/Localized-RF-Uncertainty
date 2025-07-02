@@ -54,14 +54,14 @@ def process_dataset(idx, random_state, **kwargs):
     # TODO: Review read in and prepare data
     X = regression_datasets[idx]['X']
     X = pd.get_dummies(X)
-    y = pd.Series(pd.Categorical(regression_datasets[idx]['y']).codes, name='class')
+    y = pd.Series(regression_datasets[idx]['y'], name='response')
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=random_state)
 
     n = regression_datasets[idx]['n_samples']
     d = regression_datasets[idx]['n_features']
 
     # TODO: Dynamically determine the methods to use based on the dataset
-    ks = [1, 5, 10, 20, 50, 100, 200, 500]
+    ks = [1, 5, 10, 20, 50, 100, 200, 500, 'all', 'auto']
     levels = [0.7, 0.8, 0.9, 0.95, 0.99]
 
 
@@ -119,21 +119,54 @@ def process_dataset(idx, random_state, **kwargs):
                         level=level, **kwargs
                     )
 
-                    plot_results['name'] = name
-                    plot_results['n_features'] = d
-                    plot_results['n_samples'] = n
+                    # plot_results = {
+                    #     **rf_plot_results,
+                    #     **qrf_plot_results,
+                    #     **zrf_plot_results
+                    # }
 
-                    base_results['name'] = name
-                    base_results['n_features'] = d
-                    base_results['n_samples'] = n
+                    # base_results = {
+                    #     **rf_base_results,
+                    #     **qrf_base_results,
+                    #     **zrf_base_results
+                    # }
+
+                    qrf_plot_results['name'] = name
+                    qrf_plot_results['n_features'] = d
+                    qrf_plot_results['n_samples'] = n
+
+                    zrf_plot_results['name'] = name
+                    zrf_plot_results['n_features'] = d
+                    zrf_plot_results['n_samples'] = n
+
+                    rf_plot_results['name'] = name
+                    rf_plot_results['n_features'] = d
+                    rf_plot_results['n_samples'] = n
+
+                    qrf_base_results['name'] = name
+                    qrf_base_results['n_features'] = d
+                    qrf_base_results['n_samples'] = n
+
+                    zrf_base_results['name'] = name
+                    zrf_base_results['n_features'] = d
+                    zrf_base_results['n_samples'] = n
+
+                    rf_base_results['name'] = name
+                    rf_base_results['n_features'] = d
+                    rf_base_results['n_samples'] = n
 
 
-                    save_to_pkl(plot_results, qual_fname)
-                    save_to_pkl(base_results, quant_fname)
+                    save_to_pkl(qrf_plot_results, qual_fname.with_name(qual_fname.stem + f'_qrf{qual_fname.suffix}'))
+                    save_to_pkl(zrf_plot_results, qual_fname.with_name(qual_fname.stem + f'_zrf{qual_fname.suffix}'))
+                    save_to_pkl(rf_plot_results, qual_fname.with_name(qual_fname.stem + f'_rf{qual_fname.suffix}'))
+                    save_to_pkl(qrf_base_results, quant_fname.with_name(quant_fname.stem + f'_qrf{quant_fname.suffix}'))
+                    save_to_pkl(zrf_base_results, quant_fname.with_name(quant_fname.stem + f'_zrf{quant_fname.suffix}'))
+                    save_to_pkl(rf_base_results, quant_fname.with_name(quant_fname.stem + f'_rf{quant_fname.suffix}'))
+                    
 
                 except Exception as e:
                     error_message = f"Error processing {name} with method {prox_method} and k={k}, rs={random_state}:\n"
-                    with open("run_classification_errors.txt", "a") as error_file:
+                    with open("run_regression_errors.txt", "a") as error_file:
                         error_file.write(error_message)
                         traceback.print_exc(file=error_file)
                     print(error_message)
