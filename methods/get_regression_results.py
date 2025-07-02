@@ -63,23 +63,24 @@ def get_zrf_results(X, y, X_test=None, y_test=None,
 					prox_method=None, level=0.95,
 					random_state=None, k=None, **kwargs):
 	# Zhang RF Intervals
-	zrf, zrf_lwr_test, zrf_pred_test, zrf_upr_test = rfintervals(
-		X, y, X_test=X_test, y_test=y_test, level=level, random_state=random_state
-	)
-	zrf_lwr, zrf_pred, zrf_upr = zrf.oob_pred_lwr_, zrf.oob_prediction_, zrf.oob_pred_upr_
+	rf = RFGAP(y=y, random_state=random_state, oob_score=True, **kwargs)
+	rf.fit(X, y)
 
-	width_test = extract_width_stats(get_width_stats(zrf_lwr_test, zrf_upr_test))
-	width = extract_width_stats(get_width_stats(zrf_lwr, zrf_upr))
-	coverage_test = get_coverage(y_test, zrf_lwr_test, zrf_upr_test)
-	coverage = get_coverage(y, zrf_lwr, zrf_upr)
+	rf_lwr_test, rf_pred_test, rf_upr_test = rf.predict_with_intervals(X_test=X_test, n_neighbors='all', level=level)
+	rf_lwr, rf_pred, rf_upr = rf.oob_pred_lwr_, rf.oob_prediction_, rf.oob_pred_upr_
+
+	width_test = extract_width_stats(get_width_stats(rf_lwr_test, rf_upr_test))
+	width = extract_width_stats(get_width_stats(rf_lwr, rf_upr))
+	coverage_test = get_coverage(y_test, rf_lwr_test, rf_upr_test)
+	coverage = get_coverage(y, rf_lwr, rf_upr)
 
 	base_results = {
 		'method': 'zrf',
-		'prox_method': np.nan,
+		'prox_method': prox_method,
 		'level': level,
 		'random_state': random_state,
-		'oob_score_': zrf.oob_score_,
-		'k': np.nan,
+		'oob_score_': rf.oob_score_,
+		'k': k,
 		'coverage_test': coverage_test,
 		'coverage': coverage,
 		**{f'{k}_test': v for k, v in width_test.items()},
@@ -88,11 +89,11 @@ def get_zrf_results(X, y, X_test=None, y_test=None,
 
 	plot_results = {
 		**base_results,
-		'lwr_test': zrf_lwr_test, 'pred_test': zrf_pred_test, 'upr_test': zrf_upr_test,
-		'lwr': zrf_lwr, 'pred': zrf_pred, 'upr': zrf_upr,
+		'lwr_test': rf_lwr_test, 'pred_test': rf_pred_test, 'upr_test': rf_upr_test,
+		'lwr': rf_lwr, 'pred': rf_pred, 'upr': rf_upr,
 	}
 
-	return zrf, plot_results, base_results
+	return rf, plot_results, base_results
 
 
 def get_rf_results(X, y, X_test=None, y_test=None,
