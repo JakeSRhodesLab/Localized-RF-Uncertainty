@@ -6,3 +6,6 @@ Build out regression methods and runner.
 Have Zhang method in separate regression method file for ease.
 
 Add any other methods?
+
+
+Eventually replace run_regression w/ run_regression_std (standardized)
