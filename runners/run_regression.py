@@ -76,26 +76,31 @@ def process_dataset(idx, random_state, **kwargs):
                 qualitative_dir.mkdir(parents=True, exist_ok=True)
                 quantitative_dir.mkdir(parents=True, exist_ok=True)
 
-                qual_fname = qualitative_dir / f"{name}_{prox_method}_k{k}_rs{random_state}.pkl"
-                quant_fname = quantitative_dir / f"{name}_{prox_method}_k{k}_rs{random_state}.pkl"
+                qual_fname = qualitative_dir / f"{name}_{prox_method}_k{k}_level{level}_rs{random_state}.pkl"
+                quant_fname = quantitative_dir / f"{name}_{prox_method}_k{k}_level{level}_rs{random_state}.pkl"
 
                 # TODO: Get separate file names for each method
 
 
                 # Check if both files already exist
-                if qual_fname.exists() and quant_fname.exists():
+                # Currently not checking as different file names are used for each method
+                # Check if all result files for each method exist
+                qrf_qual = qual_fname.with_name(qual_fname.stem + f'_qrf{qual_fname.suffix}')
+                zrf_qual = qual_fname.with_name(qual_fname.stem + f'_zrf{qual_fname.suffix}')
+                rf_qual = qual_fname.with_name(qual_fname.stem + f'_rf{qual_fname.suffix}')
+                qrf_quant = quant_fname.with_name(quant_fname.stem + f'_qrf{quant_fname.suffix}')
+                zrf_quant = quant_fname.with_name(quant_fname.stem + f'_zrf{quant_fname.suffix}')
+                rf_quant = quant_fname.with_name(quant_fname.stem + f'_rf{quant_fname.suffix}')
+
+                if (
+                    qrf_qual.exists() and zrf_qual.exists() and rf_qual.exists() and
+                    qrf_quant.exists() and zrf_quant.exists() and rf_quant.exists()
+                ):
                     print(f"    Skipping {prox_method}, k={k} (cached)")
                     continue
 
                 try:
 
-
-
-                    # TODO: Update the below for the regression methods
-                    # rf, plot_results, base_results = get_classification_results(
-                    #     X_train, y_train, X_test=X_test, y_test=y_test,
-                    #     prox_method=prox_method, random_state=random_state, k=k
-                    # )
 
                     rf_method = regression_methods['rf']
                     qrf_method = regression_methods['qrf']
@@ -118,18 +123,6 @@ def process_dataset(idx, random_state, **kwargs):
                         prox_method=prox_method, random_state=random_state, k=k,
                         level=level, **kwargs
                     )
-
-                    # plot_results = {
-                    #     **rf_plot_results,
-                    #     **qrf_plot_results,
-                    #     **zrf_plot_results
-                    # }
-
-                    # base_results = {
-                    #     **rf_base_results,
-                    #     **qrf_base_results,
-                    #     **zrf_base_results
-                    # }
 
                     qrf_plot_results['name'] = name
                     qrf_plot_results['n_features'] = d
