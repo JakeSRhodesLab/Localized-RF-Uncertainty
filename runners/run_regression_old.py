@@ -41,7 +41,7 @@ prox_methods = ['rfgap', 'oob', 'original']
 
 
 # Output directory
-output_dir = Path("results/regression_std")
+output_dir = Path("results/regression")
 output_dir.mkdir(parents=True, exist_ok=True)
 
 
@@ -56,12 +56,6 @@ def process_dataset(idx, random_state, **kwargs):
     X = pd.get_dummies(X)
     y = pd.Series(regression_datasets[idx]['y'], name='response')
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=random_state)
-
-    # Standardize y using training set mean and std
-    y_mean = y_train.mean()
-    y_std = y_train.std()
-    y_train = (y_train - y_mean) / y_std
-    y_test = (y_test - y_mean) / y_std
 
     n = regression_datasets[idx]['n_samples']
     d = regression_datasets[idx]['n_features']
