@@ -25,7 +25,7 @@ Here’s a summary of how the methods work, based on the paper + repository impl
 |---|---|---|
 | **RF‑GAP** | Define a notion of “local neighborhood” in feature space via random forests | Proximity between two points is how often they end in same leaf across trees (OOB or in forest). These proximities enable weighting or selecting neighbors for local error distributions. |
 | **RF‑FIRE** (Regression Intervals) | Build prediction intervals that adapt to local error behavior | 1. For each training point, gather OOB residuals of its proximate neighbors.  <br>2. For a test point, compute its proximity to training points, get weighted residuals / neighborhood residuals. <br>3. Construct interval bounds (e.g. quantiles) from those residuals. <br>4. Varying the neighborhood size (k nearest in proximity, or threshold) trades off local adaptivity vs coverage. |
-| **RF‑ICE** (Classification Trust) | Produce per‐instance “trust” scores so as to flag possibly unreliable predictions; enable rejection | Two variants presented:  <br>• **EMR** (Expected Misclassification Rate) / similar: use OOB misclassifications weighted by proximities. <br>• **Conformity**: looking at class‑wise proximities / how strongly the nearest neighbors support the predicted class vs alternatives. <br>Use these trust scores to define *unclassifiable* instances; removing or rejecting those increases precision / accuracy on remaining points. |
+| **RF‑ICE** (Classification Trust) | Produce per‐instance “trust” scores so as to flag possibly unreliable predictions; enable rejection | Two variants presented:  <br>• **ECR** (Expected Classification Rate) / similar: use OOB misclassifications weighted by proximities. <br>• **Conformity**: looking at class‑wise proximities / how strongly the nearest neighbors support the predicted class vs alternatives. <br>Use these trust scores to define *unclassifiable* instances; removing or rejecting those increases precision / accuracy on remaining points. |
 
 Implementation details found in the repo:
 
@@ -65,7 +65,7 @@ pip install -r requirements.txt
   - Notes: Requires regression with `oob_score=True`; smaller `k` → tighter, local intervals.
 
 - **`get_instance_classification_expectation` (classification)**  
-  Computes per-instance trust scores (RF-ICE EMR) from proximities and OOB correctness.  
+  Computes per-instance trust scores (RF-ICE ECR) from proximities and OOB correctness.  
   - Inputs: `x_test`, `y_test` (optional).  
   - Output: dict with `{'train': scores, 'test': scores}`; also AUC metrics if labels given.  
   - Notes: Requires classification, `prox_method='rfgap'`, `oob_score=True`, `non_zero_diagonal=False`.
