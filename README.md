@@ -108,11 +108,9 @@ If you use this code or build on it, please cite:
   title={Localized Uncertainty Quantification in Random Forests via Proximities},
   booktitle={Proceedings of the International Conference on Machine Learning and Applications (ICMLA)},
   year={2025},
-  author={…}
+  author={Rhodes, Jake S. and Brown, Scott D. and Wilkinson, J. Riley}
 }
 ```
-
-Licensed under **GPL‑3.0**. See the `LICENSE` file for details.  
 
 ---
 
