@@ -1,6 +1,6 @@
-# RF‑Uncertainty‑ICMLA  
+# Localized RF‑Uncertainty (ICMLA 2025)
 
-This repository contains implementation, data, and experimental scripts for the paper **"Localized Uncertainty Quantification in Random Forests via Proximities"**. It provides tools to build prediction intervals for regression, trust / uncertainty measures for classification, using Random Forest proximities (RF‑GAP).
+This repository contains implementation, data, and experimental scripts for the paper **"Localized Uncertainty Quantification in Random Forests via Proximities"**. It provides tools to build prediction intervals for regression, trust / uncertainty measures for classification, using Random Forest proximities (RF‑GAP). The paper has been accepted at ICMLA 2025 in Boca Raton, Florida, December 2025.
 
 ---
 
