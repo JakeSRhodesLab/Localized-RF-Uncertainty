@@ -84,7 +84,7 @@ pip install -r requirements.txt
 **Title:** RF‑FIRE intervals across different neighborhood sizes  
 **Caption / Description:** Comparison of prediction intervals produced by RF‑FIRE when using different numbers of proximate neighbors. The intervals adapt—smaller neighborhoods produce tighter intervals where data is dense / low noise; larger neighborhoods produce wider intervals for coverage.
 
-![Figure 1: RF-FIRE Intervals](figures/rf_fire_comparison.pdf)
+![Figure 1: RF-FIRE Intervals](figures/rf_fire_comparison.png)
 
 ### Figure 2  
 **Title:** Interval width & coverage as function of neighborhood size  
@@ -95,7 +95,7 @@ pip install -r requirements.txt
 ### Figure 3  
 **Title:** RF‑ICE trust scoring / rejection curves for classification  
 **Caption / Description:** The points are sized and colored by their associated RF-ICE trust score. Red, large points are associated with lower trust, while blue, smaller points have higher trust. We sequentially remove unclassifiable points according to the set thresholds of RF-ICE trust scores and the random forest model accuracy is recorded for each subset. The model accuracy improves as more unclassifiable points are removed.
-![Figure 3: RF-ICE Waveform](figures/waveform_trust_scores_sequence.pdf)
+![Figure 3: RF-ICE Waveform](figures/waveform_trust_scores_sequence.png)
 
 ---
 
