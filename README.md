@@ -80,20 +80,22 @@ pip install -r requirements.txt
 
 ## Figures
 
-Below is a reference to all the figures in the paper. The images should be (or can be) found in the `figures/` folder. Be sure to include them so readers can see how the methods behave.
-
-
 ### Figure 1  
 **Title:** RF‑FIRE intervals across different neighborhood sizes  
 **Caption / Description:** Comparison of prediction intervals produced by RF‑FIRE when using different numbers of proximate neighbors. The intervals adapt—smaller neighborhoods produce tighter intervals where data is dense / low noise; larger neighborhoods produce wider intervals for coverage.
+
+![Figure 1: RF-FIRE Intervals](figures/rf_fire_comparison.pdf)
 
 ### Figure 2  
 **Title:** Interval width & coverage as function of neighborhood size  
 **Caption / Description:** Plots showing how mean interval width increases with increasing neighborhood size, while coverage approaches desired target. Demonstrates the trade‑off and tuning possibilities.
 
+![Figure 2: RF-FIRE Coverage](figures/width-coverage-by-k.png)
+
 ### Figure 3  
 **Title:** RF‑ICE trust scoring / rejection curves for classification  
-**Caption / Description:** Visualizations of how trust scores correlate with classification error; plots showing accuracy vs rejection rate trade‑off when discarding low‑trust instances, plus embedding of points annotated by trust.
+**Caption / Description:** The points are sized and colored by their associated RF-ICE trust score. Red, large points are associated with lower trust, while blue, smaller points have higher trust. We sequentially remove unclassifiable points according to the set thresholds of RF-ICE trust scores and the random forest model accuracy is recorded for each subset. The model accuracy improves as more unclassifiable points are removed.
+![Figure 3: RF-ICE Waveform](figures/waveform_trust_scores_sequence.pdf)
 
 ---
 
